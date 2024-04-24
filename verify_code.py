@@ -40,8 +40,7 @@ class VerifyCode(Plugin):
         self.user_id = {}
         try:
             # load config
-            curdir = os.path.dirname(__file__)
-            config_path = os.path.join(curdir, "config.json")
+            config_path = os.path.join(os.path.dirname(__file__), "config.json")
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 logger.info(f"[VerifyCode] 加载配置文件成功: {config}")
