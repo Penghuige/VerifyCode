@@ -16,6 +16,8 @@ ChatGPT on Wechat(COW) 原项目地址：https://github.com/zhayujie/chatgpt-on-
 
 根据你自己的需要，修改以下的配置/不修改，将config.json.template重命名为config.json后，将整个文件夹放入plugins文件夹，即可自动激活该插件！
 
+**！！！别忘记删除注释！！！**
+
 ![config1](.\image\config1.png)
 
 ## 使用示例
