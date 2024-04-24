@@ -16,16 +16,16 @@ ChatGPT on Wechat(COW) 原项目地址：https://github.com/zhayujie/chatgpt-on-
 
 根据你自己的需要，修改以下的配置/不修改，将config.json.template重命名为config.json后，将整个文件夹放入plugins文件夹，即可自动激活该插件！
 
-![config1](D:\Desktop\python\chatgpt-on-wechat\plugins\verify_code\image\config1.png)
+![config1](.\image\config1.png)
 
 ## 使用示例
 
 功能展示：
 
-<img src="D:\Desktop\python\chatgpt-on-wechat\plugins\verify_code\image\example1.png" alt="example1" style="zoom:50%;" />
+<img src=".\image\example1.png" alt="example1" style="zoom:50%;" />
 
 验证码激活：
 
-<img src="D:\Desktop\python\chatgpt-on-wechat\plugins\verify_code\image\example2-1.png" alt="example2-1" style="zoom:50%;" />
+<img src=".\image\example2-1.png" alt="example2-1" style="zoom:50%;" />
 
-<img src="D:\Desktop\python\chatgpt-on-wechat\plugins\verify_code\image\example2-2.png" alt="example2-2" style="zoom:50%;" />
+<img src=".\image\example2-2.png" alt="example2-2" style="zoom:50%;" />
