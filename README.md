@@ -18,7 +18,7 @@ ChatGPT on Wechat(COW) 原项目地址：https://github.com/zhayujie/chatgpt-on-
 
 **！！！别忘记删除注释！！！**
 
-![config1](.\image\config1.png)
+<img src=".\image\config1.png" alt="example1" style="zoom:50%;" />
 
 ## 使用示例
 
