@@ -36,10 +36,6 @@ ChatGPT on Wechat(COW) 原项目地址：https://github.com/zhayujie/chatgpt-on-
 
 <img src=".\image\example3-3.png" alt="example3-3" style="zoom:50%;" />
 
-<img src=".\image\example2-1.png" alt="example2-1" style="zoom:50%;" />
-
-<img src=".\image\example2-2.png" alt="example2-2" style="zoom:50%;" />
-
 群聊认证：
 
 若管理员/已认证用户在群聊中召唤机器人，照样可以使用，未认证用户无法使用
