@@ -1,1 +1,1 @@
-from .verify_code import *
+from .VerifyCode import *
