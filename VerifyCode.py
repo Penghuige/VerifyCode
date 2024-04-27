@@ -173,7 +173,7 @@ class VerifyCode(Plugin):
                 duration = timedelta(seconds=invitation_data["duration"])
                 expiry_date = start_time + duration
                 # 返回有效期
-                reply.content = f"您的试用有效期至{expiry_date.strftime('%Y年%m月%d日')}。"            
+                reply.content = f"您的有效期至{expiry_date.strftime('%Y年%m月%d日')}。"            
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
         elif cmd.startswith("激活码"):
@@ -184,11 +184,11 @@ class VerifyCode(Plugin):
                 
                 # 移入已使用邀请码
                 invitation_code = content[4:]
-                # 若该邀请码有设定时间，按设定时间来，否则按初始时间来
-                if isinstance(self.invitation_code[invitation_code], list):                
+                # 若该激活码有设定时间，按设定时间来，否则按初始时间来
+                if isinstance(self.invitation_code[invitation_code], list) and len(self.invitation_code[invitation_code]) > 1:
                     duration = self.invitation_code[invitation_code][1]
                 else:
-                    duration = self.initial_time
+                    duration = self.initial_time/24
                 self.verify_code[invitation_code] = {"sender_id": sender_id, "time": time.time(), "duration": duration * 24 * 3600}
                 # 添加白名单
                 self.whitelist.append(sender_id)
@@ -219,7 +219,16 @@ class VerifyCode(Plugin):
                 reply.content = "激活码错误！"
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
-        elif cmd == "试用":
+        elif cmd == "申请试用":
+            if sender_id in self.whitelist:
+                reply.content = "您已经是正式用户了！"
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS
+            elif sender_id in self.request_id:
+                reply.content = "您已经申请过试用了，请联系管理员以获得更多天数！"
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS
+
             # 发送一天试用激活码
             invitation_code = self.generate_invitation_code()
             reply.content = f"您已获得{self.initial_time/24}天试用!\n激活码为：{invitation_code}"
@@ -229,7 +238,7 @@ class VerifyCode(Plugin):
         else:
             reply = Reply()
             reply.type = ReplyType.TEXT
-            reply.content = "请发送正确的激活码来获取机器人的使用权限。"
+            reply.content = "请发送正确的激活码，或是输入“申请试用”来获取机器人的使用权限。"
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS
 
@@ -278,8 +287,9 @@ class VerifyCode(Plugin):
         help_text = (
             f'''
 通过激活码与邀请码来获得机器人的使用权限。\n
-若您是新用户，请输入“申请使用”后以“激活码：XXX”的形式激活。\n
+若您是新用户，请输入“申请试用”后以“激活码：XXX”的形式激活。\n
 若您是老用户，可输入“查询有效期”来查询有效期或“申请邀请码”来生成你自己的邀请码\n
+若您是管理员，可输入“申请激活码 111”来生成111天（若空则为一天）的激活码\n
 若账号过期，请联系管理员以增加使用时间！\n
 成功邀请他人使用机器人后，您的使用时间会延长{self.hours_extension}小时！\n
             '''
