@@ -8,6 +8,8 @@ VertifyCode是你的不二之选！🥳
 
 作为管理员，你不但可以申请邀请码，还能申请任意时间的激活码！输入"激活码:root"(root为程序默认的管理员激活码，可修改config中的manager进行自定义)以获得系统的管理员权限！
 
+程序运行中会将数据自动存储到插件同文件夹下的data中，每次程序运行前将会读取，保证上次记录还在，可以在json文件中修改save_file的值来选择是否开启这个功能。
+
 Enjoy this!
 
 ChatGPT on Wechat(COW) 原项目地址：https://github.com/zhayujie/chatgpt-on-wechat

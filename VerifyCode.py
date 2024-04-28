@@ -6,6 +6,7 @@ import random
 import re
 import time
 from datetime import datetime, timedelta
+import threading
 
 
 import plugins
@@ -46,6 +47,7 @@ class VerifyCode(Plugin):
         self.admin = []
         # 存放申请激活码的人，防止重复激活
         self.request_id = []
+
         try:
             # load config
             config_path = os.path.join(os.path.dirname(__file__), "config.json")
@@ -56,6 +58,23 @@ class VerifyCode(Plugin):
                 self.initial_time = config["initial_time"]   
                 self.hours_extension = config["hours_extension"]
                 self.manager = config["manager"]
+                self.save_time = config["save_time"]
+                self.save_file = config["save_file"]
+
+            if self.save_file:
+                # 在程序开始时加载数据
+                # 统一打开文件夹
+                self.invitation_code = self.load_from_json('./plugins/VerifyCode/data/invitation_code.json', dict)
+                self.inviter_code = self.load_from_json('./plugins/VerifyCode/data/inviter_code.json', dict)
+                self.verify_code = self.load_from_json('./plugins/VerifyCode/data/verify_code.json', dict)
+                self.whitelist = self.load_from_json('./plugins/VerifyCode/data/whitelist.json', list)
+                self.user_id = self.load_from_json('./plugins/VerifyCode/data/user_id.json', dict)
+                self.admin = self.load_from_json('./plugins/VerifyCode/data/admin.json', list)
+                # 保存数据的线程
+                self.save_thread = threading.Thread(target=self.save_data_periodically)
+                # 这个线程在程序结束后会卡着，需要关掉
+                self.save_thread.daemon = True
+                self.save_thread.start()
 
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
 
@@ -73,7 +92,6 @@ class VerifyCode(Plugin):
             return 
 
         context = e_context['context']
-        msg: ChatMessage = context['msg']
         isgroup = e_context["context"].get("isgroup")
         
         
@@ -90,16 +108,6 @@ class VerifyCode(Plugin):
         # 无邀请码时，初始化manager的为邀请码
         if not self.invitation_code:
             self.invitation_code[self.manager] = sender_id
-
-        # 机器人向外新添加好友时
-        if e_context["context"].type == ContextType.ACCEPT_FRIEND:
-            reply = Reply()
-            reply.type = ReplyType.TEXT
-            temp_invitation = self.generate_invitation_code()
-            reply.content = f"您已获得{self.initial_time/24}天试用!\n激活码为：{temp_invitation}"
-            self.invitation_code[temp_invitation] = sender_id
-            e_context["reply"] = reply
-            e_context.action = EventAction.BREAK_PASS
 
         reply = Reply()
         reply.type = ReplyType.TEXT
@@ -125,8 +133,6 @@ class VerifyCode(Plugin):
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
                 return
-            # 根据判断是否是管理员来申请邀请码
-        
             if cmd == "申请激活码":
                 # 生成邀请码
                 # 要获取发送人的id
@@ -210,8 +216,6 @@ class VerifyCode(Plugin):
 
                 # 移出未使用邀请码
                 self.invitation_code.pop(invitation_code)
-                # 若该邀请码有期效
-                
 
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
@@ -295,3 +299,37 @@ class VerifyCode(Plugin):
             '''
         )
         return help_text
+    
+    def load_from_json(self, filename, expected_type):
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+                if not isinstance(data, expected_type):
+                    print(f"Warning: data in {filename} is not of type {expected_type.__name__}, creating a new one.")
+                    data = expected_type()
+                return data
+        except FileNotFoundError:
+            return expected_type()
+        
+
+    def save_to_json(self, data, filename):
+        # 检查文件夹是否存在，如果不存在，创建它
+        # 需要保存在与这个文件相同文件夹的data文件夹
+        folder = os.path.dirname(filename)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        with open(filename, 'w') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        
+    def save_data_periodically(self):
+        while True:
+            # 在程序运行过程中保存数据
+            self.save_to_json(self.invitation_code, './plugins/VerifyCode/data/invitation_code.json')
+            self.save_to_json(self.inviter_code, './plugins/VerifyCode/data/inviter_code.json')
+            self.save_to_json(self.verify_code, './plugins/VerifyCode/data/verify_code.json')
+            self.save_to_json(self.whitelist, './plugins/VerifyCode/data/whitelist.json')
+            self.save_to_json(self.user_id, './plugins/VerifyCode/data/user_id.json')
+            self.save_to_json(self.admin, './plugins/VerifyCode/data/admin.json')
+
+            # 等待一段时间
+            time.sleep(self.save_time)  # 每小时保存一次数据

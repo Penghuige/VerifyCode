@@ -2,5 +2,7 @@
     # 邀请码相关配置，
     "hours_extension": 24, # 邀请一人后增加的时长，单位为小时
     "initial_time": 24, # 初始注册的时长，单位为小时
-    "manager": "root" # 管理员激活码，也仅能用一次
+    "manager": "root", # 管理员激活码，也仅能用一次
+    "save_file": true, # 是否保存数据到文件
+    "save_time": 1 # 自动保存时间
 }
