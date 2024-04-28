@@ -332,4 +332,4 @@ class VerifyCode(Plugin):
             self.save_to_json(self.admin, './plugins/VerifyCode/data/admin.json')
 
             # 等待一段时间
-            time.sleep(self.save_time)  # 每小时保存一次数据
+            time.sleep(self.save_time*60)  # 每小时保存一次数据
