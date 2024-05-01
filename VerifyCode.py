@@ -4,6 +4,7 @@ import json
 import os
 import random
 import re
+import shutil
 import time
 from datetime import datetime, timedelta
 import threading
@@ -87,7 +88,8 @@ class VerifyCode(Plugin):
         # 根据输入判断使用功能
         if e_context["context"].type not in [
             ContextType.TEXT,
-            ContextType.ACCEPT_FRIEND
+            ContextType.ACCEPT_FRIEND,
+            ContextType.FILE
         ]:
             return 
 
@@ -114,6 +116,46 @@ class VerifyCode(Plugin):
         
         # 以分隔符空格为分割，区分命令与参数
         cmd, *args = content.split(" ")
+        
+        # 如果上传上来的数据类型是文件，且是管理员上传的，判断其是否是json文件，是就新增到对应的数据中
+        # if context.type == ContextType.FILE and sender_id in self.admin:
+        #     # 如果文件名是六种json中的一种，就把他们保存在对应的数据文件中，重新读取文件
+        #     filename = context.content
+        #     print(filename)
+        #     #输出filename类型
+        #     print(type(filename))
+        #     # 文件名字是以tmp/开头的，需要去掉
+        #     # filename = filename[4:]
+        #     # 这里改成以数组
+        #     if filename[4:] in ['invitation_code.json', 'inviter_code.json', 'verify_code.json', 'whitelist.json', 'user_id.json', 'admin.json']:
+        #         # 若名字符合，将其存储到data文件夹中
+        #         data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        #         print(data_dir)
+        #         file_path = os.path.join(data_dir, filename)
+        #         print(file_path)
+        #         # # 若原先就存在，先删除
+        #         if os.path.exists(data_dir + '/' + filename[4:]):
+        #             os.remove(data_dir + '/' + filename[4:])
+                
+        #         shutil.move("../../../../" + filename, data_dir)
+        #         # # 重新读取文件
+        #         # if filename == 'invitation_code.json':
+        #         #     self.invitation_code = self.load_from_json(file_path, dict)
+        #         # elif filename == 'inviter_code.json':
+        #         #     self.inviter_code = self.load_from_json(file_path, dict)
+        #         # elif filename == 'verify_code.json':
+        #         #     self.verify_code = self.load_from_json(file_path, dict)
+        #         # elif filename == 'whitelist.json':
+        #         #     self.whitelist = self.load_from_json(file_path, list)
+        #         # elif filename == 'user_id.json':
+        #         #     self.user_id = self.load_from_json(file_path, dict)
+        #         # elif filename == 'admin.json':
+        #         #     self.admin = self.load_from_json(file_path, list)
+        #         reply.content = "上传成功！"
+        #         e_context["reply"] = reply
+        #         e_context.action = EventAction.BREAK_PASS
+        #         return
+
 
         if (sender_id in self.whitelist or group_id in self.whitelist):
             # 当用户已经在白名单中时，仍可以查询有效期及申请邀请码
@@ -168,6 +210,20 @@ class VerifyCode(Plugin):
 
                 reply.content = f"您的邀请码为{invitation_code}"
                 e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS
+            elif cmd == "下载数据":
+                # 发送数据文件
+                data_dir = os.path.join(os.path.dirname(__file__), 'data')
+                parent_dir = os.path.dirname(data_dir)
+                file_name = 'data'
+                # 指定压缩文件的路径为上级目录
+                file_path = os.path.join(parent_dir, file_name)
+                shutil.make_archive(file_path, 'zip', data_dir)
+                file_path = file_path + '.zip'
+                e_context["reply"] = Reply(ReplyType.FILE, file_path)
+                e_context.action = EventAction.BREAK_PASS
+            elif cmd == "上传数据":
+                # 上传数据
                 e_context.action = EventAction.BREAK_PASS
             elif cmd == "查询有效期":
                 # 查询有效期
@@ -320,7 +376,8 @@ class VerifyCode(Plugin):
             os.makedirs(folder)
         with open(filename, 'w') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        
+
+
     def save_data_periodically(self):
         while True:
             # 在程序运行过程中保存数据
