@@ -218,9 +218,12 @@ class VerifyCode(Plugin):
                 file_name = 'data'
                 # 指定压缩文件的路径为上级目录
                 file_path = os.path.join(parent_dir, file_name)
+                zip_file_path = file_path + '.zip'
+                # 如果压缩文件已存在，删除
+                if os.path.exists(zip_file_path):
+                    os.remove(zip_file_path)
                 shutil.make_archive(file_path, 'zip', data_dir)
-                file_path = file_path + '.zip'
-                e_context["reply"] = Reply(ReplyType.FILE, file_path)
+                e_context["reply"] = Reply(ReplyType.FILE, zip_file_path)
                 e_context.action = EventAction.BREAK_PASS
             elif cmd == "上传数据":
                 # 上传数据
