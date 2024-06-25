@@ -23,6 +23,8 @@ from plugins.godcmd import Godcmd
 # 正确，则能使用机器人的功能，若不正确则不行
 # 刚加好友的时候能够获得一天试用，通过自身发送激活码来激活
 
+# 初始的插件注册，调用这个就能够将此插件注册到机器人中
+
 @plugins.register(
     name="VerifyCode",
     desire_priority=998,
@@ -44,18 +46,17 @@ class VerifyCode(Plugin):
         self.whitelist = []
         # 存放用户ID和激活码的对应关系，每个用户对应一个激活码
         self.user_id = {}
-        # 管理员
+        # 管理员名单
         self.admin = []
         # 存放申请激活码的人，防止重复激活
         self.request_id = []
 
         try:
-            # load config
+            #加载config文件
             config_path = os.path.join(os.path.dirname(__file__), "config.json")
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 logger.info(f"[VerifyCode] 加载配置文件成功: {config}")
-
                 self.initial_time = config["initial_time"]   
                 self.hours_extension = config["hours_extension"]
                 self.manager = config["manager"]
@@ -63,20 +64,20 @@ class VerifyCode(Plugin):
                 self.save_file = config["save_file"]
 
             if self.save_file:
-                # 在程序开始时加载数据
-                # 统一打开文件夹
+                # 如果设置了保存文件/读取文件，就从文件中读取数据
                 self.invitation_code = self.load_from_json('./plugins/VerifyCode/data/invitation_code.json', dict)
                 self.inviter_code = self.load_from_json('./plugins/VerifyCode/data/inviter_code.json', dict)
                 self.verify_code = self.load_from_json('./plugins/VerifyCode/data/verify_code.json', dict)
                 self.whitelist = self.load_from_json('./plugins/VerifyCode/data/whitelist.json', list)
                 self.user_id = self.load_from_json('./plugins/VerifyCode/data/user_id.json', dict)
                 self.admin = self.load_from_json('./plugins/VerifyCode/data/admin.json', list)
-                # 保存数据的线程
+                # 为文件多设置一个线程，让文件能够按时保存
                 self.save_thread = threading.Thread(target=self.save_data_periodically)
                 # 这个线程在程序结束后会卡着，需要关掉
                 self.save_thread.daemon = True
                 self.save_thread.start()
 
+            # 进入处理消息的函数
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
 
             logger.info("[VerifyCode] inited")
@@ -85,7 +86,7 @@ class VerifyCode(Plugin):
             raise e
     
     def on_handle_context(self, e_context: EventContext):
-        # 根据输入判断使用功能
+        # 根据输入判断使用功能,若接受到的信息类型为文本、新增好友、发送文件时才进行处理
         if e_context["context"].type not in [
             ContextType.TEXT,
             ContextType.ACCEPT_FRIEND,
@@ -93,13 +94,17 @@ class VerifyCode(Plugin):
         ]:
             return 
 
+        # 获取传输过来的数据
         context = e_context['context']
         isgroup = e_context["context"].get("isgroup")
-        
-        
+        msg: ChatMessage = context['msg']
+        # 输出msg所有元素
+        # 获取nickname,这里的nickname是微信用户名，暂时未用到
+        nickname = msg.actual_user_nickname  
         group_id = None
+
         if isgroup:
-            # 是群信息，判断该群是否开启了激活码，这里的标识符是群名称，未找到群号
+            # 是群信息，判断该群是否开启了激活码，这里的标识符是群名称
             group_id = e_context.econtext["context"]["receiver"]
             sender_id = e_context.econtext["context"]["session_id"]
         else:
@@ -111,13 +116,14 @@ class VerifyCode(Plugin):
         if not self.invitation_code:
             self.invitation_code[self.manager] = sender_id
 
+        # 构造返回信息
         reply = Reply()
         reply.type = ReplyType.TEXT
         
         # 以分隔符空格为分割，区分命令与参数
         cmd, *args = content.split(" ")
         
-        # 如果上传上来的数据类型是文件，且是管理员上传的，判断其是否是json文件，是就新增到对应的数据中
+        # 如果上传上来的数据类型是文件，且是管理员上传的，判断其是否是json文件，是就新增到对应的数据中,这个地方有BUG,暂时先不加
         # if context.type == ContextType.FILE and sender_id in self.admin:
         #     # 如果文件名是六种json中的一种，就把他们保存在对应的数据文件中，重新读取文件
         #     filename = context.content
@@ -335,6 +341,7 @@ class VerifyCode(Plugin):
         # 判断这个人对应的激活码是否在持续时间内
         if sender_id in self.whitelist:
             invitation_data = self.verify_code[self.user_id[sender_id]]
+            # 激活时间 + 持续时间 > 现在时间
             start_time = datetime.fromtimestamp(invitation_data["time"])
             duration = timedelta(seconds=invitation_data["duration"])
             expiry_date = start_time + duration
@@ -360,6 +367,7 @@ class VerifyCode(Plugin):
         return help_text
     
     def load_from_json(self, filename, expected_type):
+        # 从json文件中加载数据
         try:
             with open(filename, 'r') as f:
                 data = json.load(f)
