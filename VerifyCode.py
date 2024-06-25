@@ -17,7 +17,6 @@ from channel.chat_message import ChatMessage
 
 from common.log import logger
 from plugins import *
-from plugins.godcmd import Godcmd
 
 # 这个文件用来实现功能：添加好友后进行判断，若发送邀请码且邀请码
 # 正确，则能使用机器人的功能，若不正确则不行
@@ -27,8 +26,8 @@ from plugins.godcmd import Godcmd
 
 @plugins.register(
     name="VerifyCode",
-    desire_priority=998,
-    hidden=False,
+    desire_priority=100,
+    hidden=True,
     desc="通过激活码与邀请码来获得机器人的使用权限。",
     version="1.0",
     author="Penghuige",
@@ -247,6 +246,11 @@ class VerifyCode(Plugin):
                 reply.content = f"您的有效期至{expiry_date.strftime('%Y年%m月%d日')}。"            
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
+                return
+            else :
+                print("hallo!")
+                print(content)
+                e_context.action = EventAction.CONTINUE
         elif cmd.startswith("激活码"):
             # 发送激活码 这里要辨别是不是正确的，不是就返回错误
             # 如果通过manager激活码激活的，直接加入管理员名单
